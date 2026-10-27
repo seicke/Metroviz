@@ -49,6 +49,7 @@
     "end": "End (e.g. 2030-Q4)",
     "axis": "Time axis",
     "axisQuarters": "Quarters",
+    "axisMonths": "Months",
     "axisWeeks": "Calendar weeks",
     "eventsTitle": "Events & Deadlines",
     "addEvent": "+ Event",

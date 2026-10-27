@@ -54,6 +54,29 @@ function weekGridDensity(xScale, config) {
     return { lineEvery: 4, labelEvery: 16 };
 }
 
+const MONTH_MS = 365.25 / 12 * 24 * 60 * 60 * 1000;
+
+function monthLabelEvery(xScale, config) {
+    const [start, end] = xScale.domain();
+    const months = Math.max(1, (end - start) / MONTH_MS);
+    const availablePx = config.width - config.margins.left - config.margins.right;
+    const pxPerMonth = availablePx / months;
+    if (pxPerMonth >= 24) return 1;
+    if (pxPerMonth >= 10) return 3;
+    return 6;
+}
+
+function monthLabelFormatter() {
+    const locale = typeof i18next !== 'undefined' ? i18next.resolvedLanguage : undefined;
+    try {
+        const format = new Intl.DateTimeFormat(locale, { month: 'short' });
+        // Drop abbreviation dots ("Jan." -> "Jan") to keep the 7px labels compact.
+        return d => format.format(d).replace(/\.$/, '');
+    } catch {
+        return d3.timeFormat('%b');
+    }
+}
+
 function isNearYearTick(date, xScale) {
     const x = xScale(date);
     const year = date.getFullYear();
@@ -380,6 +403,17 @@ export class MetroRenderer {
                         return i18next.t('js.calendarWeek', { week });
                     }
                     return `KW ${week}`;
+                });
+        } else if (axisMode === 'months') {
+            const labelEvery = monthLabelEvery(xScale, config);
+            const formatMonth = monthLabelFormatter();
+            minorAxis = d3.axisTop(xScale)
+                .ticks(d3.timeMonth.every(1))
+                .tickFormat(d => {
+                    // January is covered by the year label.
+                    if (d.getMonth() === 0) return '';
+                    if (d.getMonth() % labelEvery !== 0) return '';
+                    return formatMonth(d);
                 });
         } else {
             minorAxis = d3.axisTop(xScale)
